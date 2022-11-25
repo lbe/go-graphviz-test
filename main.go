@@ -1,8 +1,8 @@
 package main
 
 import (
+	"flag"
 	"log"
-	"math"
 	"math/rand"
 	"os"
 	"path"
@@ -23,12 +23,12 @@ type edge struct { // edge in digraph
 	to   string
 }
 
-type graphData struct {  // slice of edges, can be extended for richer use
+type graphData struct { // slice of edges, can be extended for richer use
 	edges []edge
 }
 
 // create children of node for test digraph
-func getChildren(p string, n uint64) (c []string) { 
+func getChildren(p string, n uint64) (c []string) {
 	for i := uint64(1); i <= n; i++ {
 		c = append(c, p+"."+strconv.FormatUint(i, 10))
 	}
@@ -73,7 +73,7 @@ func getRandomGraphParams(min, max int) graphParams {
 
 var (
 	gd map[graphParams]graphData // map to hold the test digraphs
-	wg sync.WaitGroup // wait group used for goroutines
+	wg sync.WaitGroup            // wait group used for goroutines
 )
 
 // convert a test digraph to a graphViz graph and generate the output as SVG
@@ -120,7 +120,7 @@ func createSvg(id string, p graphParams) {
 		}
 	}
 
-	fn_out := path.Join("./Svg", id+".svg") // generate output file
+	fn_out := path.Join("./Svg", id+".svg") // generate output file1G
 	if err := g.RenderFilename(graph, graphviz.SVG, fn_out); err != nil {
 		log.Fatal(err)
 	}
@@ -129,18 +129,31 @@ func createSvg(id string, p graphParams) {
 }
 
 func main() {
-	var ct_graphs int64 = int64(math.Pow(2, 2)) // number of graphviz calls
+	var ct_graphs int64           // number of graphviz calls
+	var maxWidth, maxDepth uint64 // maximum width and depth of auto generated digraphs
+	var use_goroutines bool
+
+	flag.Int64Var(&ct_graphs, "ct", 1, "number of graphs to test per run")
+	flag.Uint64Var(&maxWidth, "maxWidth", 6, "maximum width of test digraphs")
+	flag.Uint64Var(&maxDepth, "maxDepth", 6, "maximum depth of test digraphs")
+	flag.BoolVar(&use_goroutines, "use_goroutines", true, "use go routines")
+
+	flag.Parse()
 
 	err := os.MkdirAll("./Svg", 0o755) // mkdir if not exists
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	gd = genGraphData(6, 6) // generate base graph data - a set of edges in a direct graph of varying sizes
+	gd = genGraphData(maxWidth, maxDepth) // generate base graph data - a set of edges in a direct graph of varying sizes
 
 	for i := int64(1); i <= ct_graphs; i++ {
 		wg.Add(1)
-		go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(2, 6))
+		if use_goroutines {
+			go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(2, int(maxWidth)))
+		} else {
+			createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(2, int(maxWidth)))
+		}
 	}
 
 	wg.Wait()
