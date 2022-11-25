@@ -72,12 +72,15 @@ func getRandomGraphParams(minWidth, maxWidth, minDepth, maxDepth int) graphParam
 }
 
 var (
-	gd map[graphParams]graphData // map to hold the test digraphs
-	wg sync.WaitGroup            // wait group used for goroutines
+	gd     map[graphParams]graphData // map to hold the test digraphs
+	wg     sync.WaitGroup            // wait group used for goroutines
+	gMutex sync.Mutex                // mutex to insure exclusivity of graphviz operations
 )
 
 // convert a test digraph to a graphViz graph and generate the output as SVG
 func createSvg(id string, p graphParams, file_type string) {
+	gMutex.Lock()
+	defer gMutex.Unlock()
 	g := graphviz.New()
 	graph, err := g.Graph()
 	if err != nil {
