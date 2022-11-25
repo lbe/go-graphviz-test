@@ -64,10 +64,10 @@ func genGraphData(m, n uint64) map[graphParams]graphData {
 }
 
 // generate graphParams to be used for a specific test run
-func getRandomGraphParams(min, max int) graphParams {
+func getRandomGraphParams(minWidth, maxWidth, minDepth, maxDepth int) graphParams {
 	return graphParams{
-		m: uint64(rand.Intn(max-min) + min),
-		n: uint64(rand.Intn(max-min) + min),
+		m: uint64(rand.Intn(maxWidth-minWidth) + minWidth),
+		n: uint64(rand.Intn(maxDepth-minDepth) + minDepth),
 	}
 }
 
@@ -122,6 +122,7 @@ func createSvg(id string, p graphParams) {
 
 	fn_out := path.Join("./Svg", id+".svg") // generate output file1G
 	if err := g.RenderFilename(graph, graphviz.SVG, fn_out); err != nil {
+		log.Println(p)
 		log.Fatal(err)
 	}
 
@@ -130,11 +131,13 @@ func createSvg(id string, p graphParams) {
 
 func main() {
 	var ct_graphs int64           // number of graphviz calls
-	var maxWidth, maxDepth uint64 // maximum width and depth of auto generated digraphs
+	var minWidth, maxWidth, minDepth, maxDepth uint64 // maximum width and depth of auto generated digraphs
 	var use_goroutines bool
 
 	flag.Int64Var(&ct_graphs, "ct", 1, "number of graphs to test per run")
+	flag.Uint64Var(&minWidth, "minWidth", 2, "minimum width of test digraphs")
 	flag.Uint64Var(&maxWidth, "maxWidth", 6, "maximum width of test digraphs")
+	flag.Uint64Var(&minDepth, "minDepth", 2, "minimum depth of test digraphs")
 	flag.Uint64Var(&maxDepth, "maxDepth", 6, "maximum depth of test digraphs")
 	flag.BoolVar(&use_goroutines, "use_goroutines", true, "use go routines")
 
@@ -150,15 +153,11 @@ func main() {
 	for i := int64(1); i <= ct_graphs; i++ {
 		wg.Add(1)
 		if use_goroutines {
-			go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(2, int(maxWidth)))
+			go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)))
 		} else {
-			createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(2, int(maxWidth)))
+			createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)))
 		}
 	}
 
 	wg.Wait()
-}
-
-func Pow(i1, i2 int) {
-	panic("unimplemented")
 }
