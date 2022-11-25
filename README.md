@@ -54,3 +54,42 @@ differently.
 Any advice will be appreciated.
 
 lbe Nov 25, 2022
+
+##Update Nov 26, 2022 1:30 PM CST
+
+Based upon feedback from a post on this topic on reddit: [goroutines and goccy/go-graphviz package](https://www.reddit.com/r/golang/comments/z474g4/goroutines_and_goccygographviz_package/), I have added a mutex to insure that only one graphviz coroutine is active at one time.
+This is controlled with the -use_gmutux command line switch.
+This case with goroutines works.  Unfortunately, this limits the performance
+run times similar to the no goroutines base.
+
+I also realized that some of the dumps contains faults internal to the 
+graphviz code handling layout for SVG generation.  I added the ability
+to generate DOT output so that the graphviz layout code did not come
+into play.  This is controlled with the file_type command line switch.
+
+To assist with controlling the size of the graphs whent testing with SVG, 
+I added minWidth and minDepth command line switches.
+
+The full syntax is now:
+```
+/go-graphviz-test -h
+Usage of ./go-graphviz-test:
+  -ct int
+    	number of graphs to test per run (default 1)
+  -file_type string
+    	file type output (default "svg")
+  -maxDepth uint
+    	maximum depth of test digraphs (default 6)
+  -maxWidth uint
+    	maximum width of test digraphs (default 6)
+  -minDepth uint
+    	minimum depth of test digraphs (default 2)
+  -minWidth uint
+    	minimum width of test digraphs (default 2)
+  -use_gmutex
+    	use mutex to limit graphviz operations (default true)
+  -use_goroutines
+    	use goroutines (default true)
+```
+Based upon my current understanding, go-graphviz is not threadsafe when
+using lexically scoped variables such as used in `createSvg`
