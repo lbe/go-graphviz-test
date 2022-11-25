@@ -77,7 +77,7 @@ var (
 )
 
 // convert a test digraph to a graphViz graph and generate the output as SVG
-func createSvg(id string, p graphParams) {
+func createSvg(id string, p graphParams, file_type string) {
 	g := graphviz.New()
 	graph, err := g.Graph()
 	if err != nil {
@@ -120,30 +120,42 @@ func createSvg(id string, p graphParams) {
 		}
 	}
 
-	fn_out := path.Join("./Svg", id+".svg") // generate output file1G
-	if err := g.RenderFilename(graph, graphviz.SVG, fn_out); err != nil {
-		log.Println(p)
-		log.Fatal(err)
+	fn_out := path.Join("./"+file_type, id+"."+file_type) // generate output file
+	switch file_type {
+	case "svg":
+		if err := g.RenderFilename(graph, graphviz.SVG, fn_out); err != nil {
+			log.Println(p)
+			log.Fatal(err)
+		}
+	case "dot":
+		if err := g.RenderFilename(graph, graphviz.Format(graphviz.DOT), fn_out); err != nil {
+			log.Println(p)
+			log.Fatal(err)
+		}
+	default:
+		log.Fatal("Unsupported file_type: " + file_type)
 	}
 
 	wg.Done()
 }
 
 func main() {
-	var ct_graphs int64           // number of graphviz calls
+	var ct_graphs int64                               // number of graphviz calls
 	var minWidth, maxWidth, minDepth, maxDepth uint64 // maximum width and depth of auto generated digraphs
 	var use_goroutines bool
+	var file_type string
 
 	flag.Int64Var(&ct_graphs, "ct", 1, "number of graphs to test per run")
 	flag.Uint64Var(&minWidth, "minWidth", 2, "minimum width of test digraphs")
 	flag.Uint64Var(&maxWidth, "maxWidth", 6, "maximum width of test digraphs")
 	flag.Uint64Var(&minDepth, "minDepth", 2, "minimum depth of test digraphs")
 	flag.Uint64Var(&maxDepth, "maxDepth", 6, "maximum depth of test digraphs")
+	flag.StringVar(&file_type, "file_type", "svg", "file type output")
 	flag.BoolVar(&use_goroutines, "use_goroutines", true, "use go routines")
 
 	flag.Parse()
 
-	err := os.MkdirAll("./Svg", 0o755) // mkdir if not exists
+	err := os.MkdirAll("./"+file_type, 0o755) // mkdir if not exists
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -153,9 +165,9 @@ func main() {
 	for i := int64(1); i <= ct_graphs; i++ {
 		wg.Add(1)
 		if use_goroutines {
-			go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)))
+			go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)), file_type)
 		} else {
-			createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)))
+			createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)), file_type)
 		}
 	}
 
