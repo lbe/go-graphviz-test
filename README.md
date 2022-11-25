@@ -14,3 +14,5 @@ though the go package goccy/go-graphviz and saves the output as an SVG file.
 The base code works as expected when go routines are not used or when go 
 routines are used and there is only 1 or 2 graphs generated.  Anything past 2 results
 in a segmentation fault.
+
+lbe Nov 25, 2022
