@@ -78,9 +78,11 @@ var (
 )
 
 // convert a test digraph to a graphViz graph and generate the output as SVG
-func createSvg(id string, p graphParams, file_type string) {
-	gMutex.Lock()
-	defer gMutex.Unlock()
+func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
+	if use_gmutex {
+		gMutex.Lock()
+		defer gMutex.Unlock()
+	}
 	g := graphviz.New()
 	graph, err := g.Graph()
 	if err != nil {
@@ -147,6 +149,7 @@ func main() {
 	var minWidth, maxWidth, minDepth, maxDepth uint64 // maximum width and depth of auto generated digraphs
 	var use_goroutines bool
 	var file_type string
+	var use_gmutex bool
 
 	flag.Int64Var(&ct_graphs, "ct", 1, "number of graphs to test per run")
 	flag.Uint64Var(&minWidth, "minWidth", 2, "minimum width of test digraphs")
@@ -154,7 +157,8 @@ func main() {
 	flag.Uint64Var(&minDepth, "minDepth", 2, "minimum depth of test digraphs")
 	flag.Uint64Var(&maxDepth, "maxDepth", 6, "maximum depth of test digraphs")
 	flag.StringVar(&file_type, "file_type", "svg", "file type output")
-	flag.BoolVar(&use_goroutines, "use_goroutines", true, "use go routines")
+	flag.BoolVar(&use_goroutines, "use_goroutines", true, "use goroutines")
+	flag.BoolVar(&use_gmutex, "use_gmutex", true, "use mutex to limit graphviz operations")
 
 	flag.Parse()
 
@@ -168,9 +172,9 @@ func main() {
 	for i := int64(1); i <= ct_graphs; i++ {
 		wg.Add(1)
 		if use_goroutines {
-			go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)), file_type)
+			go createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)), file_type, use_gmutex)
 		} else {
-			createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)), file_type)
+			createSvg(strconv.FormatInt(i, 10), getRandomGraphParams(int(minWidth), int(maxWidth), int(minDepth), int(maxDepth)), file_type, use_gmutex)
 		}
 	}
 
