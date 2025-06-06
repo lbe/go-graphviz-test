@@ -127,4 +127,4 @@ Error message from v0.2.9
 fatal error: concurrent map writes
 ```
 
-I have created issue ????? on [goccy/go-graphviz](https://github.com/goccy/go-graphviz)
+I have created issue [fatal error: concurrent map writes with concurrent usage #117](https://github.com/goccy/go-graphviz/issues/117) on [goccy/go-graphviz](https://github.com/goccy/go-graphviz)
