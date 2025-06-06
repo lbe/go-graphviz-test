@@ -108,7 +108,7 @@ Unfortunately, I continued to receive panics similar to the above with the gorou
 command.
 
 ```text
-./go-graphviz-test -use_gmutex=false -ct 2
+./go-graphviz-test -use_gmutex=false -ct=2
 ```
 
 The error changed from an error originated in c to a an error in Go.
