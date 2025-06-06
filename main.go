@@ -161,13 +161,11 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 		var bufSVG bytes.Buffer
 		log.Println("Generating SVG for", fn_out)
 		if err := g.Render(ctx, graph, graphviz.SVG, &bufSVG); err != nil {
-			log.Println(p)
 			log.Fatalf("g.Render: err = %v", err)
 		}
 		writeBufToFile(&bufSVG, fn_out)
 	case "dot":
 		if err := g.RenderFilename(ctx, graph, graphviz.Format(graphviz.DOT), fn_out); err != nil {
-			log.Println(p)
 			log.Fatalf("g.RenderFilename: err = %v", err)
 		}
 	default:
