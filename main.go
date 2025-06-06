@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"math/rand"
@@ -83,7 +84,11 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 		gMutex.Lock()
 		defer gMutex.Unlock()
 	}
-	g := graphviz.New()
+	ctx := context.Background()
+	g, err := graphviz.New(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	graph, err := g.Graph()
 	if err != nil {
 		log.Fatal(err)
@@ -105,21 +110,21 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 
 	for _, each := range gd[p].edges {
 		if _, ok := nodes[each.from]; !ok { // create from node if not exists
-			n, err := graph.CreateNode(each.from)
+			n, err := graph.CreateNodeByName(each.from)
 			if err != nil {
 				log.Fatal(err)
 			}
 			nodes[each.from] = n
 		}
 		if _, ok := nodes[each.to]; !ok { // create to node if not exists
-			n, err := graph.CreateNode(each.to)
+			n, err := graph.CreateNodeByName(each.to)
 			if err != nil {
 				log.Fatal(err)
 			}
 			nodes[each.to] = n
 		}
 		// create the edge between the from and to nodes
-		_, err := graph.CreateEdge(each.from+"-"+each.to, nodes[each.from], nodes[each.to])
+		_, err := graph.CreateEdgeByName(each.from+"-"+each.to, nodes[each.from], nodes[each.to])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -128,12 +133,12 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 	fn_out := path.Join("./"+file_type, id+"."+file_type) // generate output file
 	switch file_type {
 	case "svg":
-		if err := g.RenderFilename(graph, graphviz.SVG, fn_out); err != nil {
+		if err := g.RenderFilename(ctx, graph, graphviz.SVG, fn_out); err != nil {
 			log.Println(p)
 			log.Fatal(err)
 		}
 	case "dot":
-		if err := g.RenderFilename(graph, graphviz.Format(graphviz.DOT), fn_out); err != nil {
+		if err := g.RenderFilename(ctx, graph, graphviz.Format(graphviz.DOT), fn_out); err != nil {
 			log.Println(p)
 			log.Fatal(err)
 		}
