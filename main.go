@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"flag"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -78,6 +80,29 @@ var (
 	gMutex sync.Mutex                // mutex to insure exclusivity of graphviz operations
 )
 
+// write the buffer to a file, creating it if it doesn't exist
+func writeBufToFile(buf *bytes.Buffer, fn string) {
+	// Open the file for writing.  Create it if it doesn't exist,
+	// truncate it if it does.
+	file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	// Write the buffer to the file.
+	_, err = io.Copy(file, buf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Ensure all data is written to disk.
+	err = file.Sync()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 // convert a test digraph to a graphViz graph and generate the output as SVG
 func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 	if use_gmutex {
@@ -133,10 +158,12 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 	fn_out := path.Join("./"+file_type, id+"."+file_type) // generate output file
 	switch file_type {
 	case "svg":
-		if err := g.RenderFilename(ctx, graph, graphviz.SVG, fn_out); err != nil {
+		var bufSVG bytes.Buffer
+		if err := g.Render(ctx, graph, graphviz.SVG, &bufSVG); err != nil {
 			log.Println(p)
 			log.Fatal(err)
 		}
+		writeBufToFile(&bufSVG, fn_out)
 	case "dot":
 		if err := g.RenderFilename(ctx, graph, graphviz.Format(graphviz.DOT), fn_out); err != nil {
 			log.Println(p)
