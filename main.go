@@ -112,15 +112,15 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 	ctx := context.Background()
 	g, err := graphviz.New(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("graphviz.New: err = %v", err)
 	}
 	graph, err := g.Graph()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("g.Graph: err = %v", err)
 	}
 	defer func() {
 		if err := graph.Close(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("graph.Close: err = %v", err)
 		}
 		g.Close()
 	}()
@@ -137,21 +137,21 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 		if _, ok := nodes[each.from]; !ok { // create from node if not exists
 			n, err := graph.CreateNodeByName(each.from)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("CreateNodeByName(%s): err = %v", each.from, err)
 			}
 			nodes[each.from] = n
 		}
 		if _, ok := nodes[each.to]; !ok { // create to node if not exists
 			n, err := graph.CreateNodeByName(each.to)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("CreateNodeByName(%s): err = %v", each.to, err)
 			}
 			nodes[each.to] = n
 		}
 		// create the edge between the from and to nodes
 		_, err := graph.CreateEdgeByName(each.from+"-"+each.to, nodes[each.from], nodes[each.to])
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("CreateEdgeByName(%s-%s): err = %v", each.from, each.to, err)
 		}
 	}
 
@@ -159,15 +159,16 @@ func createSvg(id string, p graphParams, file_type string, use_gmutex bool) {
 	switch file_type {
 	case "svg":
 		var bufSVG bytes.Buffer
+		log.Println("Generating SVG for", fn_out)
 		if err := g.Render(ctx, graph, graphviz.SVG, &bufSVG); err != nil {
 			log.Println(p)
-			log.Fatal(err)
+			log.Fatalf("g.Render: err = %v", err)
 		}
 		writeBufToFile(&bufSVG, fn_out)
 	case "dot":
 		if err := g.RenderFilename(ctx, graph, graphviz.Format(graphviz.DOT), fn_out); err != nil {
 			log.Println(p)
-			log.Fatal(err)
+			log.Fatalf("g.RenderFilename: err = %v", err)
 		}
 	default:
 		log.Fatal("Unsupported file_type: " + file_type)
